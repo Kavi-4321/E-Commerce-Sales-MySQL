@@ -145,49 +145,49 @@ INSERT INTO order_items VALUES
 
 --1). CUSTOMER ANALYSIS
 
---1. Total customers
+--I). Total customers
 select count(*) as total_customers from customers;
 
---2. Customers by state
+--II). Customers by state
 select state,count(*) as total_customers from customers group by state order by total_customers desc;
 
---3. Customers who placed more than 1 order (repeat customers)
+--III). Customers who placed more than 1 order (repeat customers)
 select c.customer_id,c.customer_name,count(o.order_id) as total_orders from customers c join orders o on c.customer_id=o.customer_id group by c.customer_id,c.customer_name having count(o.order_id)>1;
 
---4. Customers who ordered only 1 order 
+--IV). Customers who ordered only 1 order 
 select c.customer_id,c.customer_name from customers c join orders o on c.customer_id=o.customer_id group by c.customer_id,c.customer_name having count(o.order_id)=1;
 
 --2).SALES ANALYSIS
 
---1).Total revenue (Delivered orders only)
+--I).Total revenue (Delivered orders only)
 select round(sum(oi.quantity* oi.price),0) as total_revenue from order_items oi join orders o on o.order_id=oi.order_id where o.order_status='Delivered';
 
---2.) Monthly sales trend
+--II). Monthly sales trend
 select date_format(o.order_date,'%y-%m-%d') as month,round(sum(oi.quantity*oi.price),0) as monthly_revenue from order_items oi join orders o on o.order_id=oi.order_id  where o.order_status='Delivered' group by month order by month; 
 
---3.) Average order value
+--III). Average order value
 select round(avg(order_total),0) as avg_value from(select o.order_id,sum(oi.quantity*oi.price) as order_total from orders o join order_items oi on o.order_id=oi.order_id where o.order_status='Delivered' group by o.order_id)t;
 
 --3).PRODUCT PERFORMANCE
 
---1.) Top 5 selling products (by revenue)
+--I). Top 5 selling products (by revenue)
 select p.product_name,round(sum(oi.quantity*oi.price),0) as total_sales from products p join order_items oi on p.product_id=oi.product_id join orders o on o.order_id=oi.order_id where o.order_status='Delivered' group by p.product_name order by total_sales desc limit 5;
 
---2.) Sales by category
+--II). Sales by category
 select p.category,sum(oi.quantity*oi.price) as category_sales from products p join order_items oi on p.product_id=oi.product_id join orders o on o.order_id=oi.order_id where o.order_status='Delivered' group by p.category order by category_sales desc;
 
---3.) Products never sold
+--III). Products never sold
 select p.product_name,p.product_id from products p left join order_items oi on p.product_id=oi.product_id where oi.order_id is null; 
 
 --4).ORDER BEHAVIOUR
 
---1).Cancelled orders count
+--I). Cancelled orders count
 select count(*) as cancelled_orders from orders where order_status='Cancelled'; 
 
---2.) Customers with cancelled orders
+--II). Customers with cancelled orders
 select distinct c.customer_name from customers c left join orders o on o.customer_id=c.customer_id where o.order_status='Cancelled'; 
 
---3.) Order value classification
+--III). Order value classification
 select o.order_id,sum(oi.quantity*oi.price) as order_value ,
 case when sum(oi.quantity*oi.price) > 50000 then 'High value'
 when sum(oi.quantity*oi.price) between 20000 and 50000 then 'Medium value'
@@ -195,21 +195,21 @@ else 'Low value' end as order_category from order_items oi join orders o on o.or
 
 --5).AGGREGATE FUNCTIONS
 
---1).Total revenue per customer
+--I). Total revenue per customer
 select c.customer_id,c.customer_name,round(sum(oi.quantity*oi.price),0) as total_spent from customers c join orders o on c.customer_id=o.customer_id join order_items oi  on o.order_id=oi.order_id where o.order_status='Delivered' group by c.customer_id,c.customer_name order by total_spent desc;
 
---2).Total orders per customer
+--II). Total orders per customer
 select c.customer_name,count(o.order_id) as total_orders from customers c join orders o on c.customer_id=o.customer_id group by c.customer_name;
 
---3).Min / Max order value
+--III). Min / Max order value
 select round(min(order_total),0) as min_value,round(max(order_total),0) as max_value from(select o.order_id,sum(oi.quantity*oi.price) as order_total from orders o join order_items oi on o.order_id=oi.order_id where order_status ='Delivered' group by o.order_id)t;
 
 --WINDOW FUNCTIONS
 
---1).Rank customers by total spending
+--I). Rank customers by total spending
 select customer_id,customer_name,round(total_spent,0),rank()over(order by total_spent desc) as customer_rank from ( select c.customer_id,c.customer_name,sum(oi.quantity*oi.price) as total_spent from customers c join orders o on c.customer_id=o.customer_id join order_items oi on oi.order_id=o.order_id where order_status='Delivered' group by c.customer_id,c.customer_name)t;
 
---2). Running total of sales (time trend)
+--II). Running total of sales (time trend)
 select *
 from (
     select 
@@ -227,3 +227,4 @@ from (
     group by c.customer_name, c.customer_id, o.order_id
 ) t
 where rn = 1;
+
